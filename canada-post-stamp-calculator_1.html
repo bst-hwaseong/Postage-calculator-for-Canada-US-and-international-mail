@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Canada Post Stamp Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red:    #C8102E;
+    --red-lt: #f5e6e9;
+    --ink:    #1a1a1a;
+    --gray1:  #f7f7f5;
+    --gray2:  #ebebeb;
+    --gray3:  #b0b0b0;
+    --gray4:  #6b6b6b;
+    --white:  #ffffff;
+    --warn:   #c8750f;
+    --warn-lt:#fdf3e7;
+    --green:  #1a6b3a;
+    --green-lt:#e6f4ec;
+    --font:   'DM Sans', system-ui, sans-serif;
+    --mono:   'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray1);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--red);
+    color: #fff;
+    padding: 20px 24px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-flag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .maple { font-size: 28px; line-height: 1; }
+  header h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+  header p {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    margin-top: 1px;
+    font-weight: 400;
+  }
+
+  /* ── MAIN ── */
+  main {
+    flex: 1;
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 16px 48px;
+  }
+
+  /* ── WEIGHT INPUT ── */
+  .weight-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+  }
+  .weight-card label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gray4);
+    margin-bottom: 10px;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .weight-input {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    font-weight: 500;
+    border: 2px solid var(--gray2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--ink);
+    background: var(--gray1);
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  .weight-input:focus { border-color: var(--red); background: #fff; }
+  .unit-toggle {
+    display: flex;
+    border: 2px solid var(--gray2);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--gray1);
+  }
+  .unit-btn {
+    border: none;
+    background: transparent;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0 14px;
+    cursor: pointer;
+    color: var(--gray3);
+    transition: background 0.12s, color 0.12s;
+  }
+  .unit-btn.active {
+    background: var(--red);
+    color: #fff;
+  }
+
+  /* Paper guideline */
+  .paper-hint {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--gray4);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .paper-hint span { font-family: var(--mono); color: var(--ink); font-weight: 500; }
+
+  /* ── MAIL TYPE ── */
+  .type-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .type-btn {
+    flex: 1;
+    border: 2px solid var(--gray2);
+    border-radius: 10px;
+    background: var(--white);
+    padding: 10px 8px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.77rem;
+    font-weight: 600;
+    color: var(--gray4);
+    text-align: center;
+    transition: all 0.12s;
+    line-height: 1.3;
+  }
+  .type-btn .icon { font-size: 1.3rem; display: block; margin-bottom: 3px; }
+  .type-btn.active {
+    border-color: var(--red);
+    color: var(--red);
+    background: var(--red-lt);
+  }
+
+  /* ── RESULT PANEL ── */
+  .result {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    display: none;
+  }
+  .result.visible { display: block; }
+
+  .result-dest {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray4);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* price block */
+  .price-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .price-dollar {
+    font-family: var(--mono);
+    font-size: 2.4rem;
+    font-weight: 500;
+    color: var(--red);
+    line-height: 1;
+  }
+  .price-label {
+    font-size: 0.78rem;
+    color: var(--gray4);
+    font-weight: 500;
+  }
+
+  .price-note {
+    font-size: 0.78rem;
+    color: var(--gray4);
+    margin-bottom: 14px;
+  }
+
+  /* divider */
+  .divider {
+    height: 1px;
+    background: var(--gray2);
+    margin: 14px 0;
+  }
+
+  /* tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 99px;
+    font-size: 0.74rem;
+    font-weight: 600;
+  }
+  .tag-info { background: var(--gray1); color: var(--gray4); }
+  .tag-warn { background: var(--warn-lt); color: var(--warn); }
+  .tag-ok   { background: var(--green-lt); color: var(--green); }
+  .tag-error { background: var(--red-lt); color: var(--red); }
+
+  /* tracking notice */
+  .tracking-notice {
+    margin-top: 14px;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .tracking-notice.required {
+    background: var(--warn-lt);
+    color: var(--warn);
+    border: 1px solid #f0c070;
+  }
+  .tracking-notice.not-required {
+    background: var(--green-lt);
+    color: var(--green);
+    border: 1px solid #a8d5b5;
+  }
+  .tracking-notice strong { font-weight: 700; }
+
+  /* oversize notice */
+  .oversize-notice {
+    margin-top: 14px;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    background: var(--warn-lt);
+    color: var(--warn);
+    border: 1px solid #f0c070;
+  }
+
+  /* parcel redirect */
+  .parcel-notice {
+    background: var(--red-lt);
+    border: 1px solid #e8a0aa;
+    border-radius: 12px;
+    padding: 16px;
+    color: var(--red);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .parcel-notice strong { font-weight: 700; display: block; margin-bottom: 4px; font-size: 0.9rem; }
+
+  /* two-column breakdown for booklet comparison */
+  .breakdown-tabs {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .breakdown-col { flex: 1; min-width: 0; }
+  .breakdown-col-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gray4);
+    margin-bottom: 6px;
+  }
+  .breakdown-col-label.booklet-label { color: var(--green); }
+  .booklet-save {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--green);
+    background: var(--green-lt);
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+
+  /* cost breakdown */
+  .breakdown {
+    background: var(--gray1);
+    border: 1px solid var(--gray2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    font-size: 0.82rem;
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    color: var(--gray4);
+  }
+  .breakdown-row.total {
+    border-top: 1px solid var(--gray2);
+    margin-top: 6px;
+    padding-top: 8px;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 0.88rem;
+  }
+  .breakdown-row .val { font-family: var(--mono); font-weight: 500; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .usd-val { font-size: 0.68rem; color: var(--gray3); font-weight: 400; font-family: var(--mono); }
+  .breakdown-row.total .val { color: var(--red); }
+  .breakdown-row.subtotal { font-weight: 600; color: var(--ink); border-top: 1px solid var(--gray2); margin-top: 4px; padding-top: 7px; }
+  .breakdown-row.tax { color: var(--gray4); font-style: italic; }
+  .breakdown-divider { height: 1px; background: var(--gray2); margin: 8px 0 4px; }
+
+  /* booklet tip */
+  .booklet-tip {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--gray1);
+    border-radius: 9px;
+    font-size: 0.77rem;
+    color: var(--gray4);
+    border: 1px solid var(--gray2);
+  }
+  .booklet-tip strong { color: var(--ink); }
+
+  /* empty state */
+  .empty-state {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--gray3);
+    font-size: 0.9rem;
+  }
+  .empty-state .big { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+
+  /* ── STAMP COMBOS ── */
+  .stamp-section {
+    margin-top: 14px;
+    border: 1px solid var(--gray2);
+    border-radius: 10px;
+    padding: 14px;
+    background: var(--gray1);
+  }
+  .stamp-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gray4);
+    margin-bottom: 10px;
+  }
+  .stamp-combo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: var(--white);
+    border: 1px solid var(--gray2);
+    flex-wrap: wrap;
+  }
+  .stamp-combo.best {
+    border-color: var(--red);
+    background: var(--red-lt);
+  }
+  .stamp-best-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--red);
+    background: #fff;
+    border: 1px solid var(--red);
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+  .stamp-pills { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
+  .stamp-pill {
+    background: var(--white);
+    border: 1px solid var(--gray2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .stamp-combo.best .stamp-pill { background: var(--white); }
+  .stamp-overpay { font-size: 0.72rem; color: var(--warn); white-space: nowrap; }
+  .stamp-exact { font-size: 0.72rem; color: var(--green); font-weight: 600; white-space: nowrap; }
+  .stamp-note {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--gray4);
+    line-height: 1.4;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.71rem;
+    color: var(--gray3);
+  }
+  footer a { color: var(--gray3); }
+
+  @media (max-width: 400px) {
+    .type-btn .icon { font-size: 1.1rem; }
+    .price-dollar { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-flag">
+    <span class="maple">🍁</span>
+  </div>
+  <div>
+    <h1>Canada Post Stamp Calculator</h1>
+    <p>Official 2025 rates · Sending from Ontario</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- Weight input -->
+  <div class="weight-card">
+    <label>Letter weight</label>
+    <div class="input-row">
+      <input class="weight-input" id="weightInput" type="number" min="0" step="1" placeholder="0" />
+      <div class="unit-toggle">
+        <button type="button" class="unit-btn active" id="btnG">g</button>
+        <button type="button" class="unit-btn" id="btnOz">oz</button>
+      </div>
+    </div>
+    <div class="paper-hint" id="paperHint" style="display:none">
+      ≈ <span id="paperCount"></span> sheets of standard paper
+    </div>
+  </div>
+
+  <!-- Exchange rate -->
+  <div class="weight-card" style="padding: 14px 24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <span style="font-size:0.78rem; font-weight:600; color:var(--gray4); white-space:nowrap;">🇺🇸 CAD → USD rate</span>
+    <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:160px;">
+      <span style="font-size:0.82rem; color:var(--gray4);">1 CAD =</span>
+      <input id="rateInput" type="number" step="0.0001" min="0.01" max="2" value="0.7042"
+        style="font-family:var(--mono); font-size:0.95rem; font-weight:500; border:2px solid var(--gray2); border-radius:8px; padding:5px 10px; width:90px; color:var(--ink); background:var(--gray1); outline:none;"
+        oninput="updateRate()" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--gray2)'" />
+      <span style="font-size:0.82rem; color:var(--gray4);">USD</span>
+    </div>
+    <span id="rateDate" style="font-size:0.7rem; color:var(--gray3);">Mid-market · Jul 3, 2026</span>
+  </div>
+
+  <!-- Destination tabs -->
+  <div class="type-row">
+    <button type="button" class="type-btn active" id="destCA">
+      <span class="icon">🇨🇦</span>Within Canada
+    </button>
+    <button type="button" class="type-btn" id="destUS">
+      <span class="icon">🇺🇸</span>United States
+    </button>
+    <button type="button" class="type-btn" id="destINTL">
+      <span class="icon">🌍</span>International
+    </button>
+  </div>
+
+  <!-- Result -->
+  <div class="result visible" id="result">
+    <div class="empty-state" id="emptyState">
+      <span class="big">✉️</span>
+      Enter a weight above to see postage
+    </div>
+    <div id="resultContent" style="display:none"></div>
+  </div>
+
+</main>
+
+<footer>
+  Rates from <a href="https://www.canadapost-postescanada.ca/cpc/en/personal/stamp-prices.page" target="_blank">Canada Post</a> · Effective January 13, 2025 · Prices exclude tax · Letters over 500 g require parcel services
+</footer>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────────────────────────
+  // Weight in grams, price in CAD
+  const rates = {
+    CA: {
+      standard: [
+        { maxG: 30,  price: 1.44, booklet: 1.24, sheets: '~5' },
+        { maxG: 50,  price: 1.75, booklet: null,  sheets: '~9' },
+      ],
+      nonstandard: [
+        { maxG: 100, price: 2.61, sheets: '~20' },
+        { maxG: 200, price: 4.29, sheets: '~40' },
+        { maxG: 300, price: 5.98, sheets: '~60' },
+        { maxG: 400, price: 6.85, sheets: '~80' },
+        { maxG: 500, price: 7.36, sheets: '~100' },
+      ],
+    },
+    US: {
+      standard: [
+        { maxG: 30,  price: 1.75, booklet: null, sheets: '~5' },
+        { maxG: 50,  price: 2.61, booklet: null, sheets: '~9' },
+      ],
+      nonstandard: [
+        { maxG: 100, price: 4.29,  sheets: '~20' },
+        { maxG: 200, price: 7.49,  sheets: '~40' },
+        { maxG: 500, price: 14.99, sheets: '~100' },
+      ],
+    },
+    INTL: {
+      standard: [
+        { maxG: 30,  price: 3.65, booklet: null, sheets: '~5' },
+        { maxG: 50,  price: 5.21, booklet: null, sheets: '~9' },
+      ],
+      nonstandard: [
+        { maxG: 100, price: 8.60,  sheets: '~20' },
+        { maxG: 200, price: 14.99, sheets: '~40' },
+        { maxG: 500, price: 29.96, sheets: '~100' },
+      ],
+    },
+  };
+
+  const destNames = { CA: '🇨🇦 Within Canada', US: '🇺🇸 United States', INTL: '🌍 International' };
+  
+  // Tracking: standard lettermail has no tracking; registered mail (extra fee) adds it.
+  // Non-standard/oversize: still no automatic tracking — must add Registered Mail separately.
+  // Over 500g: must use parcel services which include tracking.
+  // Canada Post does NOT require tracking for any weight tier of lettermail — user must opt in.
+  // Note: items over 500g need parcel service (which has tracking options).
+
+  // ── STATE ──────────────────────────────────────────────────────────────────
+  let unit = 'g';
+  let dest = 'CA';
+  let cadToUsd = 0.7042; // Fallback rate (mid-market Jul 3, 2026)
+
+  async function fetchRate() {
+    const apis = [
+      () => fetch('https://api.frankfurter.app/latest?from=CAD&to=USD').then(r => r.json()).then(d => d.rates.USD),
+      () => fetch('https://open.er-api.com/v6/latest/CAD').then(r => r.json()).then(d => d.rates.USD),
+    ];
+    for (const api of apis) {
+      try {
+        const rate = await api();
+        if (rate && rate > 0) {
+          cadToUsd = rate;
+          const input = document.getElementById('rateInput');
+          input.value = rate.toFixed(4);
+          document.getElementById('rateDate').textContent = 'Live rate';
+          calculate();
+          return;
+        }
+      } catch {}
+    }
+    // All APIs failed — keep fallback rate, note it
+    document.getElementById('rateDate').textContent = 'Fallback rate · Jul 3, 2026';
+  }
+  fetchRate();
+
+  function updateRate() {
+    const v = parseFloat(document.getElementById('rateInput').value);
+    if (!isNaN(v) && v > 0) { cadToUsd = v; calculate(); }
+  }
+
+  // ── UNIT TOGGLE ─────────────────────────────────────────────────────────
+  function setUnit(u) {
+    unit = u;
+    document.getElementById('btnG').classList.toggle('active', u === 'g');
+    document.getElementById('btnOz').classList.toggle('active', u === 'oz');
+    calculate();
+  }
+  document.getElementById('btnG').addEventListener('click', () => setUnit('g'));
+  document.getElementById('btnOz').addEventListener('click', () => setUnit('oz'));
+
+  // ── DEST TOGGLE ─────────────────────────────────────────────────────────
+  function setDest(d) {
+    dest = d;
+    ['CA','US','INTL'].forEach(k => document.getElementById('dest'+k).classList.toggle('active', k === d));
+    calculate();
+  }
+  document.getElementById('destCA').addEventListener('click', () => setDest('CA'));
+  document.getElementById('destUS').addEventListener('click', () => setDest('US'));
+  document.getElementById('destINTL').addEventListener('click', () => setDest('INTL'));
+
+  // ── CALCULATE ───────────────────────────────────────────────────────────
+  document.getElementById('weightInput').addEventListener('input', calculate);
+
+  function calculate() {
+    const raw = parseFloat(document.getElementById('weightInput').value);
+    const result = document.getElementById('result');
+    const emptyState = document.getElementById('emptyState');
+    const content = document.getElementById('resultContent');
+
+    if (isNaN(raw) || raw <= 0) {
+      emptyState.style.display = 'block';
+      content.style.display = 'none';
+      document.getElementById('paperHint').style.display = 'none';
+      return;
+    }
+
+    // Convert to grams
+    const grams = unit === 'oz' ? raw * 28.3495 : raw;
+
+    // Paper hint
+    const paperHint = document.getElementById('paperHint');
+    const paperCount = document.getElementById('paperCount');
+    // ~5g per sheet of standard 80gsm paper
+    const sheets = Math.round(grams / 5);
+    if (sheets > 0) {
+      paperCount.textContent = sheets + (sheets === 1 ? ' sheet' : ' sheets');
+      paperHint.style.display = 'flex';
+    } else {
+      paperHint.style.display = 'none';
+    }
+
+    result.classList.add('visible');
+    emptyState.style.display = 'none';
+    content.style.display = 'block';
+
+    const destRate = rates[dest];
+
+    const SUPPLIES = 0.30;
+
+    // Over 500g → parcel
+    if (grams > 500) {
+      content.innerHTML = `
+        <div class="result-dest">${destNames[dest]}</div>
+        <div class="parcel-notice">
+          <strong>📦 Parcel service required</strong>
+          At ${formatWeight(grams)}, this item exceeds the 500 g letter mail limit.
+          You'll need to use Canada Post's parcel services. Use the 
+          <a href="https://www.canadapost-postescanada.ca/cpc/en/tools/find-a-rate.page" target="_blank" style="color:inherit">Canada Post rate calculator</a> 
+          to get a parcel quote. Parcel services include tracking.
+        </div>
+      `;
+      return;
+    }
+
+    // Determine tier
+    let tier = null;
+    let isNonStandard = false;
+
+    // Try standard first
+    for (const t of destRate.standard) {
+      if (grams <= t.maxG) { tier = t; break; }
+    }
+    if (!tier) {
+      isNonStandard = true;
+      for (const t of destRate.nonstandard) {
+        if (grams <= t.maxG) { tier = t; break; }
+      }
+    }
+
+    if (!tier) {
+      // shouldn't happen since we handle >500 above, but safety
+      content.innerHTML = `<div class="parcel-notice"><strong>Use parcel services</strong> for items over 500 g.</div>`;
+      return;
+    }
+
+    const price = tier.price.toFixed(2);
+    const HST_RATE = 0.13;
+    const hst = (tier.price * HST_RATE);
+    const totalHST = (tier.price + SUPPLIES + hst).toFixed(2);
+
+    const toUSD = (cad) => cadToUsd ? `<span class="usd-val">≈ US$${(cad * cadToUsd).toFixed(2)}</span>` : '';
+
+    // Booklet pricing
+    const hasBooklet = tier.booklet && !isNonStandard;
+    const bPrice = hasBooklet ? tier.booklet : null;
+    const bHst = hasBooklet ? (bPrice * HST_RATE) : null;
+    const bTotalHST = hasBooklet ? (bPrice + SUPPLIES + bHst).toFixed(2) : null;
+
+    const bookletHTML = '';
+
+    // Tracking info
+    let trackingHTML = '';
+    if (grams <= 500) {
+      trackingHTML = `
+        <div class="tracking-notice not-required">
+          <strong>✅ Tracking not required</strong> — Standard lettermail doesn't include tracking.
+          Add <strong>Registered Mail™</strong> at your post office if you want proof of delivery and a signature ($8.95+ extra).
+        </div>`;
+    }
+
+    // Oversize / non-standard notice
+    let oversizeHTML = '';
+    if (isNonStandard) {
+      oversizeHTML = `
+        <div class="oversize-notice">
+          ⚠️ <strong>Non-standard or oversize mail</strong> — This rate applies to large envelopes, thick items, or irregular shapes that don't fit standard letter dimensions. Drop it off at a post office to confirm classification.
+        </div>`;
+    }
+
+    // Tags
+    const weightTag = `<span class="tag tag-info">📏 ${formatWeight(grams)}</span>`;
+    const tierTag = isNonStandard
+      ? `<span class="tag tag-warn">📋 Non-standard / Oversize</span>`
+      : `<span class="tag tag-ok">✉️ Standard letter</span>`;
+    const sheetsTag = tier.sheets ? `<span class="tag tag-info">📄 ${tier.sheets} sheets</span>` : '';
+
+    // Booklet tip only for domestic standard ≤30g
+    let bookletTip = '';
+    if (!isNonStandard && tier.booklet) {
+      bookletTip = `
+        <div class="booklet-tip">
+          💡 <strong>Tip:</strong> Buy stamps in a booklet or coil to pay <strong>$${tier.booklet.toFixed(2)}</strong> each instead of $${tier.price.toFixed(2)} — Canada Post PERMANENT™ stamps never expire and always cover the current domestic rate.
+        </div>`;
+    }
+
+    content.innerHTML = `
+      <div class="result-dest">${destNames[dest]}</div>
+      <div class="price-main">
+        <div class="price-dollar">$${price}</div>
+        <div class="price-label">CAD · postage</div>
+      </div>
+      ${bookletHTML}
+      <div class="tags">${weightTag}${tierTag}${sheetsTag}</div>
+
+      ${hasBooklet ? `
+      <div class="breakdown-tabs">
+        <div class="breakdown-col">
+          <div class="breakdown-col-label">Single stamp</div>
+          <div class="breakdown">
+            <div class="breakdown-row"><span>✉️ Postage</span><span class="val">$${price} ${toUSD(tier.price)}</span></div>
+            <div class="breakdown-row"><span>📦 Supplies</span><span class="val">$${SUPPLIES.toFixed(2)} ${toUSD(SUPPLIES)}</span></div>
+            <div class="breakdown-row subtotal"><span>Subtotal</span><span class="val">$${(tier.price + SUPPLIES).toFixed(2)} ${toUSD(tier.price + SUPPLIES)}</span></div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-row tax"><span>HST (13%)</span><span class="val">$${hst.toFixed(2)} ${toUSD(hst)}</span></div>
+            <div class="breakdown-row total"><span>Total</span><span class="val">$${totalHST} ${toUSD(parseFloat(totalHST))}</span></div>
+          </div>
+        </div>
+        <div class="breakdown-col">
+          <div class="breakdown-col-label booklet-label">📒 Booklet / Coil</div>
+          <div class="breakdown">
+            <div class="breakdown-row"><span>✉️ Postage</span><span class="val">$${bPrice.toFixed(2)} ${toUSD(bPrice)}</span></div>
+            <div class="breakdown-row"><span>📦 Supplies</span><span class="val">$${SUPPLIES.toFixed(2)} ${toUSD(SUPPLIES)}</span></div>
+            <div class="breakdown-row subtotal"><span>Subtotal</span><span class="val">$${(bPrice + SUPPLIES).toFixed(2)} ${toUSD(bPrice + SUPPLIES)}</span></div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-row tax"><span>HST (13%)</span><span class="val">$${bHst.toFixed(2)} ${toUSD(bHst)}</span></div>
+            <div class="breakdown-row total"><span>Total</span><span class="val">$${bTotalHST} ${toUSD(parseFloat(bTotalHST))}</span></div>
+          </div>
+          <div class="booklet-save">Save $${(tier.price - bPrice).toFixed(2)}/stamp</div>
+        </div>
+      </div>
+      ` : `
+      <div class="breakdown">
+        <div class="breakdown-row"><span>✉️ Postage</span><span class="val">$${price} ${toUSD(tier.price)}</span></div>
+        <div class="breakdown-row"><span>📦 Supplies</span><span class="val">$${SUPPLIES.toFixed(2)} ${toUSD(SUPPLIES)}</span></div>
+        <div class="breakdown-row subtotal"><span>Subtotal</span><span class="val">$${(tier.price + SUPPLIES).toFixed(2)} ${toUSD(tier.price + SUPPLIES)}</span></div>
+        <div class="breakdown-divider"></div>
+        <div class="breakdown-row tax"><span>HST Ontario (13%)</span><span class="val">$${hst.toFixed(2)} ${toUSD(hst)}</span></div>
+        <div class="breakdown-row total"><span>Total to charge</span><span class="val">$${totalHST} ${toUSD(parseFloat(totalHST))}</span></div>
+      </div>
+      `}
+      ${renderStampCombos(tier.price)}
+      ${oversizeHTML}
+      ${trackingHTML}
+      ${bookletTip}
+    `;
+  }
+
+  // ── STAMP COMBINATION FINDER ────────────────────────────────────────────
+  // Available stamp denominations. Permanent counts as $1.24 (current domestic booklet rate).
+  // All stamps have fixed face value except Permanent, which always = current domestic rate.
+  const STAMP_TYPES = [
+    { label: 'P (Permanent)',  value: 1.24, symbol: '🍁' },
+    { label: '$1.75 US',       value: 1.75, symbol: '🇺🇸' },
+    { label: '$2.61 Oversized',value: 2.61, symbol: '📋' },
+    { label: '$3.65 Intl',     value: 3.65, symbol: '🌍' },
+  ];
+
+  function bestStampCombos(target) {
+    // Find up to 3 combos with fewest stamps and least overpay
+    // Brute-force up to 6 stamps total (covers all realistic cases)
+    const results = [];
+    const seen = new Set();
+    const n = STAMP_TYPES.length;
+
+    function search(counts, idx, total, numStamps) {
+      if (total >= target - 0.001) {
+        const key = counts.join(',');
+        if (!seen.has(key)) {
+          seen.add(key);
+          const stamps = [];
+          counts.forEach((c, i) => { if (c > 0) stamps.push({ ...STAMP_TYPES[i], count: c }); });
+          results.push({ stamps, total, overpay: total - target, numStamps });
+        }
+        return;
+      }
+      if (idx >= n || numStamps >= 6) return;
+      // try 0 to 4 of this stamp type
+      for (let c = 0; c <= 4; c++) {
+        counts[idx] = c;
+        search(counts, idx + 1, total + STAMP_TYPES[idx].value * c, numStamps + c);
+      }
+      counts[idx] = 0;
+    }
+
+    search([0,0,0,0], 0, 0, 0);
+
+    // Sort: fewest stamps first, then least overpay
+    results.sort((a, b) => a.numStamps - b.numStamps || a.overpay - b.overpay);
+
+    // Return top 3 unique combos by stamp count tier
+    const top = [];
+    const countsSeen = new Set();
+    for (const r of results) {
+      const sig = r.stamps.map(s => `${s.count}x${s.label}`).join('+');
+      if (!countsSeen.has(sig)) {
+        countsSeen.add(sig);
+        top.push(r);
+        if (top.length >= 3) break;
+      }
+    }
+    return top;
+  }
+
+  function renderStampCombos(target) {
+    const combos = bestStampCombos(target);
+    if (!combos.length) return '';
+    const rows = combos.map((c, i) => {
+      const pills = c.stamps.map(s =>
+        `<span class="stamp-pill">${s.symbol} ${s.count > 1 ? s.count + '× ' : ''}${s.label}</span>`
+      ).join('');
+      const overpay = c.overpay > 0.005
+        ? `<span class="stamp-overpay">+$${c.overpay.toFixed(2)} overpay</span>`
+        : `<span class="stamp-exact">✓ exact</span>`;
+      return `<div class="stamp-combo ${i === 0 ? 'best' : ''}">${i === 0 ? '<span class="stamp-best-label">Best</span>' : ''}<div class="stamp-pills">${pills}</div>${overpay}</div>`;
+    }).join('');
+    return `
+      <div class="stamp-section">
+        <div class="stamp-section-title">🪙 How to make up the postage</div>
+        ${rows}
+        <div class="stamp-note">Permanent stamps always count as the current domestic rate ($1.24). Any mix of stamps is accepted as long as the total ≥ required postage.</div>
+      </div>`;
+  }
+
+  function formatWeight(g) {
+    return g >= 1000 ? (g/1000).toFixed(2) + ' kg' : Math.round(g) + ' g';
+  }
+
+  // Init complete
+</script>
+</body>
+</html>
